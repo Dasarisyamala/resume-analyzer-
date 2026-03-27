@@ -1,0 +1,5 @@
+{
+  "python": ["What is Python?", "Explain OOP concepts"],
+  "html": ["What is HTML?", "Difference between div and span"],
+  "machine learning": ["What is ML?", "Explain overfitting"]
+}
