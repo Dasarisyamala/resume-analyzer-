@@ -1,71 +1,439 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>AI Resume Analyzer</title>
+    <title>Resume Analyzer</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #4facfe, #00f2fe);
-            margin: 0;
-            padding: 0;
+        :root {
+            --ink: #111826;
+            --sky: #5a7ff8;
+            --mint: #4adbc4;
+            --sand: #f5f0ea;
+            --card: rgba(255,255,255,0.92);
         }
 
-        .container {
-            width: 40%;
-            margin: 100px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0px 10px 25px rgba(0,0,0,0.2);
-            text-align: center;
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, #1f2b59, #0b1224 70%);
+            color: var(--sand);
+            min-height: 100vh;
+            padding: 40px 5vw 80px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
         }
 
         h1 {
-            color: #333;
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
         }
 
-        input[type="file"] {
-            margin: 20px 0;
+        header p {
+            margin: 6px 0 0;
+            max-width: 520px;
+            color: rgba(255,255,255,0.85);
+        }
+
+        .badge {
+            background: rgba(255,255,255,0.15);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+        }
+
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.12);
+            font-size: 0.9rem;
+            gap: 10px;
+        }
+
+        .user-chip span {
+            opacity: 0.85;
+        }
+
+        .logout-link {
+            color: var(--mint);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .hero {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 24px;
+            padding: 28px;
+            margin-bottom: 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .hero h2 {
+            margin: 0 0 12px;
+            font-size: 2rem;
+        }
+
+        .hero-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0 0;
+        }
+
+        .hero-list li {
+            margin-bottom: 8px;
+            padding-left: 24px;
+            position: relative;
+            font-size: 0.95rem;
+        }
+
+        .hero-list li::before {
+            content: '•';
+            position: absolute;
+            left: 6px;
+            color: var(--mint);
+        }
+
+        .hero-panel {
+            background: rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 20px;
+        }
+
+        .mini-indicator {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--mint);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 24px;
+            color: var(--ink);
+            box-shadow: 0 20px 50px rgba(20,20,40,0.25);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 6px;
+            color: #3d3d52;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: rgba(255,255,255,0.85);
+            font-size: 0.95rem;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
         }
 
         button {
-            background: #4facfe;
-            color: white;
-            padding: 10px 20px;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
+            padding: 12px 18px;
+            background: linear-gradient(135deg, var(--sky), var(--mint));
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: transform 0.2s ease;
         }
 
         button:hover {
-            background: #007bff;
+            transform: translateY(-2px);
         }
 
-        .footer {
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-tile {
+            background: rgba(255,255,255,0.08);
+            padding: 16px 20px;
+            border-radius: 14px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .stat-tile span {
+            display: block;
+            font-size: 0.85rem;
+            opacity: 0.8;
+        }
+
+        .stat-tile strong {
+            font-size: 1.8rem;
+        }
+
+        .list {
             margin-top: 20px;
-            font-size: 12px;
-            color: gray;
+        }
+
+        .list-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 0.8rem;
+            background: rgba(90,127,248,0.15);
+            color: #2f3e8c;
+            margin-right: 8px;
+        }
+
+        .jobs-table {
+            width: 100%;
+            border-spacing: 0;
+        }
+
+        .jobs-table th,
+        .jobs-table td {
+            padding: 10px 8px;
+            text-align: left;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+
+        .notice {
+            font-size: 0.85rem;
+            color: #2f3e8c;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 24px;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .header-right {
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
 
 <body>
+    <header>
+        <div>
+            <h1>Resume Analyzer</h1>
+            <p>Interactive, company-grade screening that scores resumes, surfaces missing skills, and prepares follow-up questions instantly.</p>
+        </div>
+        <div class="header-right">
+            <div class="badge">AI-powered shortlisting · Flask · SQL backend</div>
+            <div class="user-chip">
+                <span>{{ current_user.email }}</span>
+                <a class="logout-link" href="/logout">Logout</a>
+            </div>
+        </div>
+    </header>
 
-<div class="container">
-    <h1>🤖 AI Resume Analyzer</h1>
-    <p>Upload your resume and get instant analysis</p>
+    <section class="hero">
+        <div>
+            <h2>Modern screening workflow</h2>
+            <p>Upload a stack of resumes and watch the system extract skills, detect domains, and craft interview prompts—mirroring enterprise ATS experiences.</p>
+            <ul class="hero-list">
+                <li>Automatic skill & contact extraction</li>
+                <li>Domain-based scoring with visual meters</li>
+                <li>Dynamic follow-up questions per candidate</li>
+                <li>Actionable tips to boost resume quality</li>
+            </ul>
+        </div>
+        <div class="hero-panel">
+            <p>Average resume score this week</p>
+            <div class="mini-indicator">92%</div>
+            <p style="margin-top:12px;">Top domains: Web Development · Data Science · Cloud</p>
+        </div>
+    </section>
 
+    <section class="stats">
+        <div class="stat-tile">
+            <span>Total resumes</span>
+            <strong>{{ stats.resume_count }}</strong>
+        </div>
+        <div class="stat-tile">
+            <span>Job requirements</span>
+            <strong>{{ stats.job_count }}</strong>
+        </div>
+        <div class="stat-tile">
+            <span>Domains tracked</span>
+            <strong>6</strong>
+        </div>
+    </section>
 
-    <form action="/upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="resume" multiple required>
-        <br>
-        <button type="submit">Analyze Resume(s)</button>
-    </form>
+    <div class="grid">
+        <div class="card">
+            <h2>Upload resumes</h2>
+            <p>Batch-process PDF/DOCX files, auto-classify domain, and score skills.</p>
+            <form action="/upload" method="post" enctype="multipart/form-data">
+                <label for="resume">Resume files</label>
+                <input type="file" id="resume" name="resume" multiple required>
 
-    <div class="footer">
-        Built with AI + ML
+                <label for="job-select">Evaluate against job</label>
+                <select id="job-select" name="job_id">
+                    <option value="">Skip scoring</option>
+                    {% for job in jobs %}
+                        <option value="{{ job.id }}">{{ job.title }} · {{ job.domain or 'General' }}</option>
+                    {% endfor %}
+                </select>
+
+                <button type="submit">Analyze Resume(s)</button>
+            </form>
+            <div class="notice">Need JSON? POST to /upload_resume with multipart/form-data to receive structured results.</div>
+        </div>
+
+        <div class="card">
+            <h2>Define job requirement</h2>
+            <form id="job-form">
+                <label for="title">Role title</label>
+                <input type="text" id="title" name="title" required>
+
+                <label for="domain">Target domain</label>
+                <input type="text" id="domain" name="domain" placeholder="e.g., Data Science">
+
+                <label for="skills">Required skills (comma separated)</label>
+                <input type="text" id="skills" name="skills" placeholder="python, pandas, sql">
+
+                <label for="keywords">Keywords (comma separated)</label>
+                <input type="text" id="keywords" name="keywords" placeholder="analytics, dashboard">
+
+                <label for="experience">Minimum experience (years)</label>
+                <input type="number" id="experience" name="experience" min="0" step="0.5">
+
+                <label for="description">Summary</label>
+                <textarea id="description" name="description" placeholder="Responsibilities, tech stack, KPI..."></textarea>
+
+                <button type="submit">Save requirement</button>
+            </form>
+            <div class="notice" id="job-feedback"></div>
+        </div>
     </div>
-</div>
 
+    <div class="grid" style="margin-top:32px;">
+        <div class="card">
+            <h2>Recent resumes</h2>
+            <div class="list">
+                {% for resume in resumes %}
+                    <div class="list-item">
+                        <strong>{{ resume.name or resume.original_filename }}</strong>
+                        <div class="tag">{{ resume.domain or 'General' }}</div>
+                        <div>{{ resume.email or 'N/A' }}</div>
+                    </div>
+                {% else %}
+                    <p>No resumes processed yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Job requirements</h2>
+            <table class="jobs-table">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Domain</th>
+                        <th>Min Exp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for job in jobs %}
+                        <tr>
+                            <td>{{ job.title }}</td>
+                            <td>{{ job.domain or 'General' }}</td>
+                            <td>{{ job.min_experience or 'N/A' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="3">Create your first requirement to enable ranking.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const jobForm = document.getElementById('job-form');
+        const feedback = document.getElementById('job-feedback');
+
+        jobForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            feedback.textContent = 'Submitting...';
+
+            const payload = {
+                title: jobForm.title.value.trim(),
+                domain: jobForm.domain.value.trim() || null,
+                required_skills: jobForm.skills.value.split(',').map(s => s.trim()).filter(Boolean),
+                keywords: jobForm.keywords.value.split(',').map(s => s.trim()).filter(Boolean),
+                min_experience: jobForm.experience.value ? Number(jobForm.experience.value) : null,
+                description: jobForm.description.value.trim() || null,
+            };
+
+            try {
+                const response = await fetch('/job_requirements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to save requirement');
+                }
+                const data = await response.json();
+                feedback.textContent = `Saved role "${data.title}". Refresh to see it in the list.`;
+                jobForm.reset();
+            } catch (error) {
+                feedback.textContent = error.message;
+            }
+        });
+    </script>
 </body>
 </html>

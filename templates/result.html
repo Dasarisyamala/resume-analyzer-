@@ -1,200 +1,353 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Analysis Result</title>
-
+    <title>Resume Analysis Studio</title>
     <style>
+        :root {
+            --ink: #0d1128;
+            --night: #080b17;
+            --card: #ffffff;
+            --accent: #5a7ff8;
+            --mint: #54d6c5;
+            --peach: #ffb88f;
+        }
+
+        * { box-sizing: border-box; }
+
         body {
-            font-family: Arial;
-            background: #f4f6f9;
             margin: 0;
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top, #1e2754, var(--night) 70%);
+            color: #f4f4fb;
+            min-height: 100vh;
         }
 
         .header {
-            background: #4facfe;
-            color: white;
-            padding: 15px;
-            text-align: center;
+            padding: 40px 6vw 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.6rem;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            max-width: 640px;
+            color: rgba(255,255,255,0.78);
+        }
+
+        .user-nav {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 10px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .user-nav a {
+            color: var(--mint, #54d6c5);
+            text-decoration: none;
+            font-weight: 600;
         }
 
         .container {
-            width: 80%;
-            margin: 30px auto;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto 70px;
         }
 
-        .card {
-            background: white;
-            padding: 20px;
-            margin: 20px 0;
+        .error-panel {
+            background: rgba(255, 97, 97, 0.1);
+            border: 1px solid rgba(255,97,97,0.4);
+            padding: 16px;
             border-radius: 12px;
-            box-shadow: 0px 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 24px;
+            color: #ffd2d2;
         }
 
-        h2 {
-            color: #333;
+        article.card {
+            background: var(--card);
+            border-radius: 24px;
+            padding: 28px 32px;
+            margin-bottom: 32px;
+            color: var(--ink);
+            box-shadow: 0 30px 70px rgba(6,10,28,0.35);
         }
 
-        ul {
+        .card-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .score-ring {
+            --value: 75;
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            background: conic-gradient(var(--mint) calc(var(--value) * 1%), rgba(90,127,248,0.15) 0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .score-ring span {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .score-ring small {
+            position: absolute;
+            top: calc(50% + 20px);
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            color: rgba(13,17,40,0.65);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            background: rgba(90,127,248,0.15);
+            color: #313b80;
+            margin-right: 8px;
+            margin-top: 6px;
+        }
+
+        .meta {
+            color: #4d5371;
+            font-size: 0.95rem;
+            margin-top: 6px;
+        }
+
+        .grid-panels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-top: 24px;
+        }
+
+        .panel {
+            background: rgba(248,249,253,0.9);
+            border-radius: 18px;
+            padding: 18px;
+            border: 1px solid rgba(13,17,40,0.04);
+        }
+
+        .panel h3 {
+            margin: 0 0 12px;
+            font-size: 1.05rem;
+        }
+
+        .chip-wrap {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .chip {
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(90,127,248,0.15);
+            font-size: 0.85rem;
+        }
+
+        .progress-row {
+            margin-bottom: 10px;
+        }
+
+        .progress-row span {
+            font-size: 0.9rem;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+
+        .progress-track {
+            height: 8px;
+            width: 100%;
+            background: rgba(13,17,40,0.08);
+            border-radius: 999px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, var(--accent), var(--mint));
+        }
+
+        .tips-list,
+        .question-list {
             list-style: none;
             padding: 0;
+            margin: 0;
         }
 
-        li {
-            padding: 8px;
-            background: #e9f5ff;
-            margin: 5px 0;
-            border-radius: 5px;
+        .tips-list li,
+        .question-list li {
+            background: #eef1ff;
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #253260;
         }
 
-        .score {
-            font-size: 18px;
-            font-weight: bold;
-            color: green;
+        .question-list li {
+            background: #fdf6ee;
         }
 
         .btn {
-            display: inline-block;
-            margin-top: 20px;
-            background: #4facfe;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            margin: 30px auto 0;
+            background: linear-gradient(135deg, var(--accent), var(--mint));
             color: white;
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 14px 22px;
+            border-radius: 14px;
             text-decoration: none;
+            font-weight: 600;
+        }
+
+        @media (max-width: 700px) {
+            .card-head {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .score-ring {
+                align-self: center;
+            }
+            .header {
+                flex-direction: column;
+            }
+            .user-nav {
+                width: 100%;
+                align-items: flex-start;
+            }
         }
     </style>
 </head>
-
 <body>
-
-<div class="header">
-    <h1>📊 Resume Analysis Dashboard</h1>
-</div>
-
-
-<div class="container">
-    {% for result in results %}
-    <div class="card">
-        <h2>📄 {{ result.filename }}</h2>
-        {% if result.error %}
-            <div class="error">❌ <b>Error:</b> {{ result.error }}</div>
-        {% else %}
-            <div class="info-row"><b>Name:</b> {{ result.name or 'N/A' }}</div>
-            <div class="info-row"><b>Email:</b> {{ result.email or 'N/A' }}</div>
-            <div class="info-row"><b>Phone:</b> {{ result.phone or 'N/A' }}</div>
-            <div class="info-row"><b>Education:</b> {{ result.education or 'N/A' }}</div>
-            <div class="info-row"><b>Experience:</b> {{ result.experience or 'N/A' }}</div>
-            <h3>📌 Extracted Skills</h3>
-            <ul class="skills-list">
-                {% for skill in result.skills %}
-                <li>{{ skill }}</li>
-                {% endfor %}
-            </ul>
-            <h3>📊 Job Match (ATS Score)</h3>
-            <ul class="score-list">
-                {% for job, score in result.job_scores.items() %}
-                <li>{{ job }} → <span class="score">{{ score }}%</span></li>
-                {% endfor %}
-            </ul>
-            <h3>🤖 Interview Questions</h3>
-            <ul class="questions-list">
-                {% for q in result.questions %}
-                <li>{{ q }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+    <div class="header">
+        <div>
+            <h1>Resume Analysis Dashboard</h1>
+            <p>Each resume is graded, mapped to a domain, and paired with smart follow-up questions—just like top-tier recruiting platforms.</p>
+        </div>
+        <div class="user-nav">
+            <span>{{ current_user.email }}</span>
+            <a href="/logout">Logout</a>
+        </div>
     </div>
-    {% endfor %}
-    <a href="/" class="btn">⬅ Upload More Resumes</a>
-</div>
-<style>
-    body {
-        font-family: 'Segoe UI', Arial, sans-serif;
-        background: linear-gradient(120deg, #e0eafc 0%, #cfdef3 100%);
-        margin: 0;
-    }
-    .header {
-        background: #2d6cdf;
-        color: white;
-        padding: 20px;
-        text-align: center;
-        letter-spacing: 1px;
-        font-size: 2.2em;
-        font-weight: 600;
-        box-shadow: 0 2px 8px rgba(44,108,223,0.08);
-    }
-    .container {
-        width: 90%;
-        max-width: 1100px;
-        margin: 40px auto;
-    }
-    .card {
-        background: white;
-        padding: 28px 32px;
-        margin: 30px 0;
-        border-radius: 18px;
-        box-shadow: 0 6px 24px rgba(44,108,223,0.10);
-        transition: box-shadow 0.2s;
-        border-left: 6px solid #2d6cdf;
-    }
-    .card:hover {
-        box-shadow: 0 12px 32px rgba(44,108,223,0.18);
-    }
-    h2 {
-        color: #2d6cdf;
-        margin-bottom: 10px;
-    }
-    h3 {
-        color: #333;
-        margin-top: 18px;
-        margin-bottom: 8px;
-    }
-    .info-row {
-        margin-bottom: 6px;
-        font-size: 1.08em;
-    }
-    .skills-list, .score-list, .questions-list {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 10px 0;
-    }
-    .skills-list li, .score-list li, .questions-list li {
-        padding: 7px 12px;
-        background: #f0f6ff;
-        margin: 4px 0;
-        border-radius: 6px;
-        font-size: 1em;
-    }
-    .score {
-        font-size: 1.1em;
-        font-weight: bold;
-        color: #1e8e3e;
-    }
-    .btn {
-        display: inline-block;
-        margin-top: 30px;
-        background: #2d6cdf;
-        color: white;
-        padding: 12px 22px;
-        border-radius: 10px;
-        text-decoration: none;
-        font-size: 1.1em;
-        font-weight: 500;
-        box-shadow: 0 2px 8px rgba(44,108,223,0.08);
-        transition: background 0.2s;
-    }
-    .btn:hover {
-        background: #1a4e9b;
-    }
-    .error {
-        color: #b00020;
-        background: #ffeaea;
-        padding: 12px;
-        border-radius: 8px;
-        margin: 10px 0 0 0;
-        font-size: 1.1em;
-        font-weight: 500;
-    }
-</style>
 
+    <div class="container">
+        {% if errors and errors|length %}
+            <div class="error-panel">
+                <strong>Upload issues:</strong>
+                <ul>
+                    {% for error in errors %}
+                        <li>{{ error.filename or 'Unknown file' }} → {{ error.error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        {% for result in results %}
+            {% set resume = result.resume %}
+            <article class="card">
+                <div class="card-head">
+                    <div>
+                        <h2>{{ resume.name or resume.filename or 'Candidate' }}</h2>
+                        <div class="meta">{{ resume.email or 'N/A' }} · {{ resume.phone or 'N/A' }}</div>
+                        <div class="pill">{{ result.domain_label }}</div>
+                        {% if resume.years_experience %}
+                            <div class="pill">{{ resume.years_experience }} yrs experience</div>
+                        {% endif %}
+                        {% if result.match %}
+                            <div class="meta">Aligned role: <strong>{{ result.match.job.title }}</strong> ({{ result.match.score }}%)</div>
+                        {% endif %}
+                    </div>
+                    <div class="score-ring" style="--value: {{ result.resume_score|round(0, 'floor') }};">
+                        <span>{{ result.resume_score }}%</span>
+                        <small>Resume score</small>
+                    </div>
+                </div>
+
+                <div class="grid-panels">
+                    <div class="panel">
+                        <h3>Key skills</h3>
+                        <div class="chip-wrap">
+                            {% for skill in result.skills %}
+                                <div class="chip">{{ skill }}</div>
+                            {% else %}
+                                <p>No skills detected.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <h3>Domain confidence</h3>
+                        {% for bar in result.domain_progress %}
+                            <div class="progress-row">
+                                <span>{{ bar.domain }} · {{ bar.value }}%</span>
+                                <div class="progress-track">
+                                    <div class="progress-fill" style="width: {{ bar.value }}%"></div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p>No domain clues detected.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if result.match %}
+                    <div class="panel" style="margin-top:18px;">
+                        <h3>ATS breakdown</h3>
+                        <p>Score: <strong>{{ result.match.score }}%</strong></p>
+                        <p>Skills matched: {{ result.match.breakdown.matched_skills|join(', ') or 'N/A' }}</p>
+                        <p>Keywords hit: {{ result.match.breakdown.matched_keywords|join(', ') or 'N/A' }}</p>
+                    </div>
+                {% endif %}
+
+                <div class="grid-panels" style="margin-top:18px;">
+                    <div class="panel">
+                        <h3>Improvement suggestions</h3>
+                        <ul class="tips-list">
+                            {% for tip in result.tips %}
+                                <li>{{ tip }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="panel">
+                        <h3>Follow-up questions</h3>
+                        <ul class="question-list">
+                            {% for question in result.questions %}
+                                <li>{{ question }}</li>
+                            {% else %}
+                                <li>No tailored questions generated.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </article>
+        {% else %}
+            <p>No resumes processed yet.</p>
+        {% endfor %}
+
+        <a href="/" class="btn">← Upload more resumes</a>
+    </div>
 </body>
 </html>
