@@ -5,13 +5,10 @@ class Config:
     """Centralized Flask configuration."""
 
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
-    
-    # Database migration logic for production
-    _DB_URL = os.getenv("DATABASE_URL", "sqlite:///database.db")
-    if _DB_URL.startswith("postgres://"):
-        _DB_URL = _DB_URL.replace("postgres://", "postgresql://", 1)
-        
-    SQLALCHEMY_DATABASE_URI = _DB_URL
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL",
+        "sqlite:///database.db",  # fallback for local development
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # File uploads
