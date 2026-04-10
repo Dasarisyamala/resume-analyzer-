@@ -273,11 +273,18 @@
                         <h2>{{ resume.name or resume.filename or 'Candidate' }}</h2>
                         <div class="meta">{{ resume.email or 'N/A' }} · {{ resume.phone or 'N/A' }}</div>
                         <div class="pill">{{ result.domain_label }}</div>
+                        {% if result.considered_domains and result.considered_domains|length %}
+                            <div class="pill">Scoped domains: {{ result.considered_domains|join(', ') }}</div>
+                        {% endif %}
                         {% if resume.years_experience %}
                             <div class="pill">{{ resume.years_experience }} yrs experience</div>
                         {% endif %}
                         {% if result.match %}
                             <div class="meta">Aligned role: <strong>{{ result.match.job.title }}</strong> ({{ result.match.score }}%)</div>
+                        {% endif %}
+                        <div class="meta">Stored in: {{ result.storage.backend|upper }} · {{ result.storage.path }}</div>
+                        {% if result.storage.warnings and result.storage.warnings|length %}
+                            <div class="meta" style="color:#944d00;">Storage warning: {{ result.storage.warnings|join('; ') }}</div>
                         {% endif %}
                     </div>
                     <div class="score-ring" style="--value: {{ result.resume_score|round(0, 'floor') }};">

@@ -12,6 +12,7 @@ from database import db
 from models import Resume, ResumeSkill
 from parser import extract_text
 from services.domain_classifier import classify_domain
+from services.storage import StorageError, maybe_remove_local_file, upload_file_to_s3
 from services.text_parsing import parse_resume_details
 from skills import extract_skills
 
@@ -31,6 +32,9 @@ def process_resume_file(
     file_storage: FileStorage,
     upload_dir: str,
     allowed_extensions: set[str],
+    storage_backend: str = "local",
+    storage_config: Dict[str, str | bool] | None = None,
+    preferred_domains: List[str] | None = None,
 ) -> Tuple[Resume, Dict[str, List[str]]]:
     if file_storage.filename == "":
         raise ValueError("Empty filename provided")
@@ -50,12 +54,30 @@ def process_resume_file(
 
     details = parse_resume_details(text)
     skills = extract_skills(text)
-    domain, domain_scores = classify_domain(skills, text)
+    domain, domain_scores = classify_domain(skills, text, preferred_domains)
+
+    resolved_file_path = file_path
+    warnings: List[str] = []
+    config = storage_config or {}
+
+    if storage_backend == "s3":
+        try:
+            resolved_file_path = upload_file_to_s3(
+                local_path=file_path,
+                filename=unique_name,
+                bucket=str(config.get("bucket") or ""),
+                region=str(config.get("region") or "us-east-1"),
+                prefix=str(config.get("prefix") or "resumes"),
+            )
+            if bool(config.get("delete_local_after_upload", True)):
+                maybe_remove_local_file(file_path)
+        except StorageError as exc:
+            warnings.append(str(exc))
 
     resume = Resume(
         original_filename=file_storage.filename,
         stored_filename=unique_name,
-        file_path=file_path,
+        file_path=resolved_file_path,
         content_type=file_storage.mimetype,
         name=details.get("name"),
         email=details.get("email"),
@@ -74,4 +96,11 @@ def process_resume_file(
 
     _persist_skills(resume, skills)
 
-    return resume, {"skills": skills, "domain_scores": dict(domain_scores)}
+    return resume, {
+        "skills": skills,
+        "domain_scores": dict(domain_scores),
+        "considered_domains": preferred_domains or [],
+        "storage_backend": storage_backend,
+        "storage_path": resolved_file_path,
+        "warnings": warnings,
+    }

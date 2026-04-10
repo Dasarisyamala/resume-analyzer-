@@ -191,6 +191,12 @@ def _build_result_payload(
         "resume": resume.to_dict(),
         "skills": diagnostics.get("skills", []),
         "domain_scores": diagnostics.get("domain_scores", {}),
+        "considered_domains": diagnostics.get("considered_domains", []),
+        "storage": {
+            "backend": diagnostics.get("storage_backend", "local"),
+            "path": diagnostics.get("storage_path", resume.file_path),
+            "warnings": diagnostics.get("warnings", []),
+        },
         "questions": generate_questions(diagnostics.get("skills", [])),
     }
 
@@ -213,9 +219,23 @@ def _build_result_payload(
     return payload
 
 
-def _process_files(files, job_id: int | None) -> Tuple[List[Dict], List[Dict]]:
+def _parse_domain_input(value: str | None) -> List[str]:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _process_files(
+    files,
+    job_id: int | None,
+    preferred_domains: List[str] | None = None,
+) -> Tuple[List[Dict], List[Dict]]:
     if not files:
         raise BadRequest("No files were provided")
+    if len(files) > app.config["MAX_FILES_PER_UPLOAD"]:
+        raise BadRequest(
+            f"Maximum {app.config['MAX_FILES_PER_UPLOAD']} files allowed per upload"
+        )
 
     processed: List[Dict] = []
     errors: List[Dict] = []
@@ -231,6 +251,16 @@ def _process_files(files, job_id: int | None) -> Tuple[List[Dict], List[Dict]]:
                 file,
                 app.config["UPLOAD_FOLDER"],
                 app.config["ALLOWED_EXTENSIONS"],
+                storage_backend=app.config["STORAGE_BACKEND"],
+                storage_config={
+                    "bucket": app.config.get("AWS_S3_BUCKET"),
+                    "region": app.config.get("AWS_REGION"),
+                    "prefix": app.config.get("AWS_S3_PREFIX"),
+                    "delete_local_after_upload": app.config.get(
+                        "DELETE_LOCAL_AFTER_CLOUD_UPLOAD", True
+                    ),
+                },
+                preferred_domains=preferred_domains,
             )
 
             match_model = None
@@ -263,6 +293,8 @@ def home():
         stats=stats,
         resumes=recent_resumes,
         jobs=jobs,
+        storage_backend=app.config["STORAGE_BACKEND"],
+        max_files_per_upload=app.config["MAX_FILES_PER_UPLOAD"],
     )
 
 
@@ -271,7 +303,8 @@ def home():
 def upload():
     files = request.files.getlist("resume")
     job_id = request.form.get("job_id", type=int)
-    processed, errors = _process_files(files, job_id)
+    preferred_domains = _parse_domain_input(request.form.get("domains"))
+    processed, errors = _process_files(files, job_id, preferred_domains)
 
     status = 200 if processed else 400
     return (
@@ -287,7 +320,10 @@ def upload_resume_api():
     job_id = request.form.get("job_id", type=int) or request.args.get(
         "job_id", type=int
     )
-    processed, errors = _process_files(files, job_id)
+    preferred_domains = _parse_domain_input(
+        request.form.get("domains") or request.args.get("domains")
+    )
+    processed, errors = _process_files(files, job_id, preferred_domains)
 
     if not processed and errors:
         status = 400

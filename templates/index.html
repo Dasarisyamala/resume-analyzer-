@@ -320,6 +320,9 @@
                 <label for="resume">Resume files</label>
                 <input type="file" id="resume" name="resume" multiple required>
 
+                <label for="domains">Target domains (optional, comma separated)</label>
+                <input type="text" id="domains" name="domains" placeholder="e.g., Data Science, Cloud Computing">
+
                 <label for="job-select">Evaluate against job</label>
                 <select id="job-select" name="job_id">
                     <option value="">Skip scoring</option>
@@ -330,7 +333,8 @@
 
                 <button type="submit">Analyze Resume(s)</button>
             </form>
-            <div class="notice">Need JSON? POST to /upload_resume with multipart/form-data to receive structured results.</div>
+            <div class="notice">Storage backend: {{ storage_backend|upper }} · Max files per upload: {{ max_files_per_upload }}</div>
+            <div class="notice">Need JSON? POST to /upload_resume with multipart/form-data to receive structured results. You can send domains=Data Science,Cloud Computing to guide classification.</div>
         </div>
 
         <div class="card">
