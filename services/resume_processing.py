@@ -35,6 +35,7 @@ def process_resume_file(
     storage_backend: str = "local",
     storage_config: Dict[str, str | bool] | None = None,
     preferred_domains: List[str] | None = None,
+    user_id: int | None = None,
 ) -> Tuple[Resume, Dict[str, List[str]]]:
     if file_storage.filename == "":
         raise ValueError("Empty filename provided")
@@ -90,6 +91,7 @@ def process_resume_file(
         domain=domain,
         skills=json.dumps(skills),
         domain_evidence=json.dumps(domain_scores),
+        user_id=user_id,
     )
     db.session.add(resume)
     db.session.flush()

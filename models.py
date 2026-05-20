@@ -23,6 +23,8 @@ class User(db.Model, TimestampMixin):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), default="admin")
 
+    notifications = db.Column(db.Text, default="[]")  # JSON encoded list of alerts
+
     @classmethod
     def create(cls, email: str, password: str, role: str = "admin") -> "User":
         user = cls(
@@ -56,6 +58,10 @@ class Resume(db.Model, TimestampMixin):
     skills = db.Column(db.Text)  # JSON encoded list
     domain_evidence = db.Column(db.Text)
 
+    # Added uploader relationship
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    uploader = db.relationship("User", backref="uploaded_resumes")
+
     matches = db.relationship(
         "MatchResult",
         back_populates="resume",
@@ -87,6 +93,7 @@ class Resume(db.Model, TimestampMixin):
             "domain": self.domain,
             "years_experience": self.years_experience,
             "skills": self.skills_list,
+            "uploader_email": self.uploader.email if self.uploader else "Anonymous",
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import wraps
 from typing import Dict, List, Tuple
 
@@ -42,6 +42,17 @@ def login_required(func):
             if next_url.endswith("?"):
                 next_url = next_url[:-1]
             return redirect(url_for("login", next=next_url))
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def admin_required(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        user = current_user()
+        if not user or user.role != "admin":
+            return "Access Denied: Admins Only", 403
         return func(*args, **kwargs)
 
     return wrapper
@@ -229,6 +240,7 @@ def _process_files(
     files,
     job_id: int | None,
     preferred_domains: List[str] | None = None,
+    user_id: int | None = None,
 ) -> Tuple[List[Dict], List[Dict]]:
     if not files:
         raise BadRequest("No files were provided")
@@ -261,6 +273,7 @@ def _process_files(
                     ),
                 },
                 preferred_domains=preferred_domains,
+                user_id=user_id,
             )
 
             match_model = None
@@ -286,15 +299,39 @@ def home():
         "resume_count": Resume.query.count(),
         "job_count": JobRequirement.query.count(),
     }
-    recent_resumes = Resume.query.order_by(Resume.created_at.desc()).limit(5).all()
-    jobs = JobRequirement.query.order_by(JobRequirement.created_at.desc()).all()
     return render_template(
         "index.html",
         stats=stats,
+        storage_backend=app.config["STORAGE_BACKEND"],
+    )
+
+
+@app.route("/resumes_page")
+@login_required
+def resumes_page():
+    user = current_user()
+    if user.role == "admin":
+        recent_resumes = Resume.query.order_by(Resume.created_at.desc()).all()
+    else:
+        # Regular users only see their own uploads
+        recent_resumes = Resume.query.filter_by(user_id=user.id).order_by(Resume.created_at.desc()).all()
+    
+    jobs = JobRequirement.query.order_by(JobRequirement.created_at.desc()).all()
+    return render_template(
+        "resumes.html",
         resumes=recent_resumes,
         jobs=jobs,
-        storage_backend=app.config["STORAGE_BACKEND"],
-        max_files_per_upload=app.config["MAX_FILES_PER_UPLOAD"],
+    )
+
+
+@app.route("/jobs_page")
+@login_required
+@admin_required
+def jobs_page():
+    jobs = JobRequirement.query.order_by(JobRequirement.created_at.desc()).all()
+    return render_template(
+        "jobs.html",
+        jobs=jobs,
     )
 
 
@@ -304,7 +341,10 @@ def upload():
     files = request.files.getlist("resume")
     job_id = request.form.get("job_id", type=int)
     preferred_domains = _parse_domain_input(request.form.get("domains"))
-    processed, errors = _process_files(files, job_id, preferred_domains)
+    user = current_user()
+    processed, errors = _process_files(
+        files, job_id, preferred_domains, user_id=user.id if user else None
+    )
 
     status = 200 if processed else 400
     return (
@@ -323,7 +363,10 @@ def upload_resume_api():
     preferred_domains = _parse_domain_input(
         request.form.get("domains") or request.args.get("domains")
     )
-    processed, errors = _process_files(files, job_id, preferred_domains)
+    user = current_user()
+    processed, errors = _process_files(
+        files, job_id, preferred_domains, user_id=user.id if user else None
+    )
 
     if not processed and errors:
         status = 400
@@ -379,6 +422,23 @@ def job_requirements():
         keywords=json.dumps(payload.get("keywords", [])),
     )
     db.session.add(job)
+
+    # Notify users who uploaded resumes in this domain
+    if job.domain:
+        users_to_notify = User.query.join(Resume).filter(Resume.domain.ilike(f"%{job.domain}%")).distinct().all()
+        notification = {
+            "type": "job_update",
+            "message": f"New job update for {job.title} in {job.domain} domain!",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        for user in users_to_notify:
+            try:
+                current_notes = json.loads(user.notifications)
+            except:
+                current_notes = []
+            current_notes.append(notification)
+            user.notifications = json.dumps(current_notes)
+
     db.session.commit()
     return jsonify(job.to_dict()), 201
 

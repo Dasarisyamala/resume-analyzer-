@@ -1,0 +1,9 @@
+<nav style="background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 12px; margin-bottom: 24px;">
+    <ul style="list-style: none; padding: 0; margin: 0; display: flex; gap: 20px;">
+        <li><a href="{{ url_for('home') }}" style="color: var(--sand); text-decoration: none; font-weight: 500;">Dashboard</a></li>
+        <li><a href="{{ url_for('resumes_page') }}" style="color: var(--sand); text-decoration: none; font-weight: 500;">Resumes</a></li>
+        {% if current_user.role == 'admin' %}
+            <li><a href="{{ url_for('jobs_page') }}" style="color: var(--sand); text-decoration: none; font-weight: 500;">Job Postings (Admin Only)</a></li>
+        {% endif %}
+    </ul>
+</nav>

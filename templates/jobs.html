@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Analyzer · Jobs</title>
+    <style>
+        :root {
+            --ink: #111826;
+            --sky: #5a7ff8;
+            --mint: #4adbc4;
+            --sand: #f5f0ea;
+            --card: rgba(255,255,255,0.92);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, #1f2b59, #0b1224 70%);
+            color: var(--sand);
+            min-height: 100vh;
+            padding: 40px 5vw 80px;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 24px;
+            color: var(--ink);
+            box-shadow: 0 20px 50px rgba(20,20,40,0.25);
+            margin-bottom: 24px;
+        }
+        h1, h2 { margin-top: 0; }
+        label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: #3d3d52; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.85);
+        }
+        button {
+            border: none; border-radius: 12px; padding: 12px 18px;
+            background: linear-gradient(135deg, var(--sky), var(--mint));
+            color: white; font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        .jobs-table { width: 100%; border-spacing: 0; }
+        .jobs-table th, .jobs-table td { padding: 10px 8px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.08); }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+    
+    <h1>Job Requirements & Notifications</h1>
+
+    <div class="card">
+        <h2>Define New Job Requirement</h2>
+        <form id="job-form">
+            <label for="title">Role title</label>
+            <input type="text" id="title" name="title" required>
+
+            <label for="domain">Target domain (triggers notifications)</label>
+            <input type="text" id="domain" name="domain" placeholder="e.g., Data Science">
+
+            <label for="skills">Required skills (comma separated)</label>
+            <input type="text" id="skills" name="skills" placeholder="python, pandas, sql">
+
+            <label for="keywords">Keywords (comma separated)</label>
+            <input type="text" id="keywords" name="keywords" placeholder="analytics, dashboard">
+
+            <label for="experience">Minimum experience (years)</label>
+            <input type="number" id="experience" name="experience" min="0" step="0.5">
+
+            <label for="description">Summary</label>
+            <textarea id="description" name="description" placeholder="Responsibilities, tech stack, KPI..."></textarea>
+
+            <button type="submit">Save requirement</button>
+        </form>
+        <div id="job-feedback"></div>
+    </div>
+
+    <div class="card">
+        <h2>Existing Job Roles</h2>
+        <table class="jobs-table">
+            <thead>
+                <tr>
+                    <th>Role</th>
+                    <th>Domain</th>
+                    <th>Min Exp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for job in jobs %}
+                    <tr>
+                        <td>{{ job.title }}</td>
+                        <td>{{ job.domain or 'General' }}</td>
+                        <td>{{ job.min_experience or 'N/A' }}</td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="3">Create your first requirement to enable ranking.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const jobForm = document.getElementById('job-form');
+        const feedback = document.getElementById('job-feedback');
+
+        jobForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            feedback.textContent = 'Submitting...';
+
+            const payload = {
+                title: jobForm.title.value.trim(),
+                domain: jobForm.domain.value.trim() || null,
+                required_skills: jobForm.skills.value.split(',').map(s => s.trim()).filter(Boolean),
+                keywords: jobForm.keywords.value.split(',').map(s => s.trim()).filter(Boolean),
+                min_experience: jobForm.experience.value ? Number(jobForm.experience.value) : null,
+                description: jobForm.description.value.trim() || null,
+            };
+
+            try {
+                const response = await fetch('/job_requirements', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to save requirement');
+                }
+                const data = await response.json();
+                feedback.textContent = `Saved role "${data.title}" and notified matching users. Refresh to see it in the list.`;
+                jobForm.reset();
+            } catch (error) {
+                feedback.textContent = error.message;
+            }
+        });
+    </script>
+</body>
+</html>

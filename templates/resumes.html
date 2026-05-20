@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Resume Analyzer · Resumes</title>
+    <style>
+        :root {
+            --ink: #111826;
+            --sky: #5a7ff8;
+            --mint: #4adbc4;
+            --sand: #f5f0ea;
+            --card: rgba(255,255,255,0.92);
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at top left, #1f2b59, #0b1224 70%);
+            color: var(--sand);
+            min-height: 100vh;
+            padding: 40px 5vw 80px;
+        }
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 24px;
+            color: var(--ink);
+            box-shadow: 0 20px 50px rgba(20,20,40,0.25);
+            margin-bottom: 24px;
+        }
+        h1, h2 { margin-top: 0; }
+        label { display: block; font-size: 0.9rem; margin-bottom: 6px; color: #3d3d52; }
+        input[type="file"], input[type="text"], select {
+            width: 100%; padding: 12px; margin-bottom: 16px; border-radius: 10px;
+            border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.85);
+        }
+        button {
+            border: none; border-radius: 12px; padding: 12px 18px;
+            background: linear-gradient(135deg, var(--sky), var(--mint));
+            color: white; font-size: 1rem; font-weight: 600; cursor: pointer;
+        }
+        .list-item { padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .tag {
+            display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.8rem;
+            background: rgba(90,127,248,0.15); color: #2f3e8c; margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'nav.html' %}
+    
+    <h1>Manage Resumes</h1>
+    
+    <div class="card">
+        <h2>Upload New Resumes</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="resume">Resume files</label>
+            <input type="file" id="resume" name="resume" multiple required>
+
+            <label for="domains">Target domains (optional, comma separated)</label>
+            <input type="text" id="domains" name="domains" placeholder="e.g., Data Science, Cloud Computing">
+
+            <label for="job-select">Evaluate against job</label>
+            <select id="job-select" name="job_id">
+                <option value="">Skip scoring</option>
+                {% for job in jobs %}
+                    <option value="{{ job.id }}">{{ job.title }} · {{ job.domain or 'General' }}</option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Analyze Resume(s)</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Processed Resumes</h2>
+        <div class="list">
+            {% for resume in resumes %}
+                <div class="list-item">
+                    <strong>{{ resume.name or resume.original_filename }}</strong>
+                    <div class="tag">{{ resume.domain or 'General' }}</div>
+                    {% if current_user.role == 'admin' %}
+                        <div style="font-size: 0.8rem; color: #666;">
+                            Uploaded by: {{ resume.uploader.email if resume.uploader else 'Anonymous' }}
+                        </div>
+                    {% endif %}
+                    <div>{{ resume.email or 'N/A' }}</div>
+                </div>
+            {% else %}
+                <p>No resumes processed yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

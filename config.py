@@ -14,7 +14,7 @@ class Config:
     # File uploads
     UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 128 * 1024 * 1024))
-    MAX_FILES_PER_UPLOAD = int(os.getenv("MAX_FILES_PER_UPLOAD", 50))
+    MAX_FILES_PER_UPLOAD = int(os.getenv("MAX_FILES_PER_UPLOAD", 100))
 
     # Allowed resume extensions
     ALLOWED_EXTENSIONS = {".pdf", ".docx"}
